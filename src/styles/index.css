@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; scroll-padding-top: 78px; }
+  body {
+    @apply bg-decreto-dark text-decreto-white font-body antialiased;
+    background: #030816;
+  }
+  h1, h2, h3 { @apply font-display tracking-wide; }
+  .font-display { font-family: 'Anton', Impact, sans-serif; }
+  ::selection { background: rgba(62,216,240,.22); color: #fff; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+}
+
+@layer components {
+  .section-title {
+    @apply relative inline-block font-display text-[2.5rem] leading-[0.95] md:text-5xl lg:text-[3.35rem] text-decreto-white uppercase tracking-[0.035em];
+    text-shadow: 0 10px 24px rgba(0,0,0,.3);
+  }
+  .section-title::after {
+    content: '';
+    @apply block h-[3px] w-16 mt-3;
+    background: linear-gradient(90deg, #3ED8F0, #2E6BFF 70%, transparent);
+    box-shadow: 0 0 14px rgba(62,216,240,.24);
+  }
+  .text-center .section-title::after { margin-left: auto; margin-right: auto; }
+
+  .glow-border {
+    box-shadow: 0 0 0 1px rgba(62,216,240,0.08), 0 20px 60px -22px rgba(46,107,255,0.28);
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-decreto-electric hover:bg-decreto-cyan hover:text-decreto-dark text-white font-body font-bold px-5 py-3 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-decreto-cyan focus:ring-offset-2 focus:ring-offset-decreto-dark;
+    box-shadow: 0 10px 34px rgba(46,107,255,.16);
+  }
+  .clip-button { clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
+  .card-surface { @apply bg-decreto-navy/60 border border-decreto-electric/20 backdrop-blur-sm; }
+  .carousel-control { @apply h-11 w-11 border border-decreto-electric/25 hover:border-decreto-cyan text-decreto-white/[0.65] hover:text-decreto-cyan grid place-items-center transition-colors bg-decreto-dark/30; }
+  .decreto-section { background-color: #050c1c; }
+
+  section[id] { scroll-margin-top: 78px; }
+
+  .hero-grid {
+    background-image:
+      linear-gradient(120deg, rgba(62,216,240,.06) 1px, transparent 1px),
+      linear-gradient(30deg, rgba(46,107,255,.025) 1px, transparent 1px);
+    background-size: 92px 92px, 130px 130px;
+  }
+
+  .hero-energy-ring {
+    border: 1px solid rgba(62,216,240,.08);
+    border-radius: 999px;
+    box-shadow: inset 0 0 60px rgba(46,107,255,.08), 0 0 80px rgba(46,107,255,.08);
+    transform: rotate(-10deg) scale(.92,1.05);
+    opacity: .75;
+  }
+
+  .match-decreto-side::before {
+    content: '';
+    position: absolute;
+    inset: 12% 8%;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(46,107,255,.18), transparent 68%);
+    filter: blur(22px);
+    pointer-events: none;
+  }
+
+  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: rgba(62,216,240,.24) transparent; }
+  .scrollbar-thin::-webkit-scrollbar { height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(62,216,240,.24); border-radius: 999px; }
+}
+
