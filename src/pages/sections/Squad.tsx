@@ -12,6 +12,7 @@ interface SquadProps {
 
 export function Squad({ players, staff }: SquadProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const firstTrackRef = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
   const interactionPauseUntil = useRef(0);
 
@@ -24,26 +25,58 @@ export function Squad({ players, staff }: SquadProps) {
 
   function nudge(direction: -1 | 1) {
     const scroller = scrollerRef.current;
-    if (!scroller) return;
-    interactionPauseUntil.current = Date.now() + 5000;
-    const max = scroller.scrollWidth - scroller.clientWidth;
-    const next = scroller.scrollLeft + direction * cardStep();
-    if (direction > 0 && next >= max - 8) {
-      scroller.scrollTo({ left: 0, behavior: 'smooth' });
-    } else if (direction < 0 && scroller.scrollLeft <= 8) {
-      scroller.scrollTo({ left: max, behavior: 'smooth' });
-    } else {
-      scroller.scrollBy({ left: direction * cardStep(), behavior: 'smooth' });
+    const firstTrack = firstTrackRef.current;
+    if (!scroller || !firstTrack) return;
+
+    interactionPauseUntil.current = Date.now() + 900;
+    const loopWidth = firstTrack.offsetWidth;
+
+    if (direction < 0 && scroller.scrollLeft < cardStep()) {
+      scroller.scrollLeft += loopWidth;
     }
+
+    scroller.scrollBy({ left: direction * cardStep(), behavior: 'smooth' });
   }
 
   useEffect(() => {
     if (players.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = window.setInterval(() => {
-      if (!paused && Date.now() > interactionPauseUntil.current) nudge(1);
-    }, 3600);
-    return () => window.clearInterval(timer);
+
+    let frame = 0;
+    let previousTime = performance.now();
+    const speed = 34; // pixels por segundo
+
+    const animate = (currentTime: number) => {
+      const scroller = scrollerRef.current;
+      const firstTrack = firstTrackRef.current;
+      const delta = Math.min(currentTime - previousTime, 64);
+      previousTime = currentTime;
+
+      if (scroller && firstTrack && !paused && Date.now() > interactionPauseUntil.current) {
+        const loopWidth = firstTrack.offsetWidth;
+
+        if (loopWidth > 0) {
+          scroller.scrollLeft += (speed * delta) / 1000;
+
+          if (scroller.scrollLeft >= loopWidth) {
+            scroller.scrollLeft -= loopWidth;
+          }
+        }
+      }
+
+      frame = window.requestAnimationFrame(animate);
+    };
+
+    frame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frame);
   }, [paused, players.length]);
+
+  function pauseOnMouse() {
+    setPaused(true);
+  }
+
+  function resumeOnMouse() {
+    setPaused(false);
+  }
 
   return (
     <section id="elenco" className="relative py-16 md:py-20 overflow-hidden bg-[#061027] border-y border-decreto-electric/10">
@@ -72,23 +105,46 @@ export function Squad({ players, staff }: SquadProps) {
             <div className="absolute inset-y-0 right-0 w-8 md:w-16 bg-gradient-to-l from-[#061027] to-transparent z-10 pointer-events-none" aria-hidden="true" />
             <div
               ref={scrollerRef}
-              className="flex overflow-x-auto overscroll-x-contain scroll-smooth pb-4 scrollbar-thin snap-x snap-mandatory px-[max(1rem,calc((100vw-72rem)/2))]"
+              className="flex overflow-x-auto overscroll-x-contain pb-4 scrollbar-thin px-[max(1rem,calc((100vw-72rem)/2))]"
               role="list"
-              aria-label="Elenco do Decreto FC. Deslize para navegar."
+              aria-label="Elenco do Decreto FC. O carrossel passa continuamente e pausa ao posicionar o mouse sobre um jogador."
               tabIndex={0}
-              onPointerEnter={() => setPaused(true)}
-              onPointerLeave={() => setPaused(false)}
-              onPointerDown={() => { setPaused(true); interactionPauseUntil.current = Date.now() + 5000; }}
-              onPointerUp={() => { setPaused(false); interactionPauseUntil.current = Date.now() + 5000; }}
-              onFocus={() => setPaused(true)}
-              onBlur={() => setPaused(false)}
+              onPointerDown={(event) => {
+                if (event.pointerType !== 'mouse') interactionPauseUntil.current = Date.now() + 5000;
+              }}
+              onPointerUp={(event) => {
+                if (event.pointerType !== 'mouse') interactionPauseUntil.current = Date.now() + 1200;
+              }}
             >
-              <div className="flex w-max gap-5 pr-4">
-                {players.map((player) => (
-                  <div role="listitem" key={player.id} className="snap-start" data-player-card>
-                    <PlayerCard player={player} />
+              <div className="flex w-max">
+                <div ref={firstTrackRef} className="flex gap-5 pr-5">
+                  {players.map((player) => (
+                    <div
+                      role="listitem"
+                      key={player.id}
+                      data-player-card
+                      onMouseEnter={pauseOnMouse}
+                      onMouseLeave={resumeOnMouse}
+                    >
+                      <PlayerCard player={player} />
+                    </div>
+                  ))}
+                </div>
+
+                {players.length > 1 && (
+                  <div className="flex gap-5 pr-5" aria-hidden="true">
+                    {players.map((player) => (
+                      <div
+                        key={`loop-${player.id}`}
+                        data-player-card
+                        onMouseEnter={pauseOnMouse}
+                        onMouseLeave={resumeOnMouse}
+                      >
+                        <PlayerCard player={player} />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <p className="max-w-6xl mx-auto px-4 mt-2 text-[11px] text-decreto-white/[0.5] flex items-center gap-1.5 sm:hidden">
